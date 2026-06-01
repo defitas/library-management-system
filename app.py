@@ -23,11 +23,11 @@ try:
             print(f"Tabel admin mungkin sudah auto_increment: {e_admin}")
 
         try:
-            cursor.execute("ALTER TABLE user MODIFY COLUMN id INT AUTO_INCREMENT;")
+            cursor.execute("ALTER TABLE users MODIFY COLUMN id INT AUTO_INCREMENT;")
             db.commit()
-            print("Tabel user berhasil diperbaiki!")
-        except Exception as e_user:
-            print(f"Tabel user mungkin sudah auto_increment: {e_user}")
+            print("Tabel users berhasil diperbaiki!")
+        except Exception as e_users:
+            print(f"Tabel users mungkin sudah auto_increment: {e_users}")
 
 except Exception as e:
     print(f"Gagal total eksekusi perintah: {e}")
