@@ -1,0 +1,70 @@
+name: CI/CD Pipeline to Azure via GitHub Registry (GHCR)
+
+on:
+  push:
+    branches:
+      - master  # Memicu otomatisasi setiap kali ada push di branch master kelompok 15
+
+jobs:
+  # ==========================================
+  # 1. CI STAGE: AUTOMATED TESTING & VALIDATION
+  # ==========================================
+  ci-stage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python Runtime
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install & Validate Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Automated Syntax Linting
+        run: |
+          python -m pip install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+  # ==========================================
+  # 2. CD STAGE: DOCKER BUILD & DEPLOY TO AZURE
+  # ==========================================
+  cd-stage:
+    needs: ci-stage  # Hanya berjalan jika gerbang kualitas uji CI Stage berhasil lolos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      # Otentikasi ke GitHub Container Registry (GHCR) bawaan akun GitHub kalian
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Otomatis disediakan oleh GitHub, tidak perlu buat secret baru
+
+      # Mengubah nama image menjadi huruf kecil agar valid di GHCR
+      - name: Downcase Repository Owner
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >> $GITHUB_ENV
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
+      # Proses kompilasi & push Docker Image menuju GitHub Packages
+      - name: Build and Push Docker Image to GHCR
+        run: |
+          docker build . -t ghcr.io/${{ env.OWNER_LC }}/teslibrary:latest
+          docker push ghcr.io/${{ env.OWNER_LC }}/teslibrary:latest
+
+      # Proses deployment image terkompilasi dari GHCR langsung menuju target Azure App Service
+      - name: Deploy Container to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'library1'  # Sesuai dengan nama App Service di portal Azure kelompok
+          publish-profile: ${{ secrets.AZURE_APP_SERVICE_PUBLISH_PROFILE }}
+          images: 'ghcr.io/${{ env.OWNER_LC }}/teslibrary:latest'
