@@ -13,21 +13,24 @@ db = DAO.db # Ambil objek koneksi database dari DAO kelompokmu
 try:
     with app.app_context():
         cursor = db.cur()
-        cursor.execute("SHOW TABLES LIKE 'admin';")
-        result = cursor.fetchone()
         
-        if not result:
-            print("Database kosong. Memulai pembentukan skema otomatis...")
-            with open('db/lms.sql', 'r') as f:
-                # Menggunakan gunicorn/linux splitter yang aman
-                sql_commands = f.read().split(';')
-                for command in sql_commands:
-                    if command.strip():
-                        cursor.execute(command)
+        print("Menjalankan skrip perbaikan AUTO_INCREMENT di Azure...")
+        try:
+            cursor.execute("ALTER TABLE admin MODIFY COLUMN id INT AUTO_INCREMENT;")
             db.commit()
-            print("Skema database lms.sql berhasil terbentuk!")
+            print("Tabel admin berhasil diperbaiki!")
+        except Exception as e_admin:
+            print(f"Tabel admin mungkin sudah auto_increment: {e_admin}")
+
+        try:
+            cursor.execute("ALTER TABLE user MODIFY COLUMN id INT AUTO_INCREMENT;")
+            db.commit()
+            print("Tabel user berhasil diperbaiki!")
+        except Exception as e_user:
+            print(f"Tabel user mungkin sudah auto_increment: {e_user}")
+
 except Exception as e:
-    print(f"Gagal menginisialisasi database: {e}")
+    print(f"Gagal total eksekusi perintah: {e}")
 
 # Registering blueprints
 from routes.user import user_view
