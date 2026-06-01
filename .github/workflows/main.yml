@@ -58,8 +58,8 @@ jobs:
       # Proses kompilasi & push Docker Image menuju GitHub Packages
       - name: Build and Push Docker Image to GHCR
         run: |
-          docker build . -t ghcr.io/${{ env.OWNER_LC }}/teslibrary:latest
-          docker push ghcr.io/${{ env.OWNER_LC }}/teslibrary:latest
+          docker build . -t ghcr.io/${{ env.OWNER_LC }}/library1:latest
+          docker push ghcr.io/defitas/library1:latest
 
       # Proses deployment image terkompilasi dari GHCR langsung menuju target Azure App Service
       - name: Deploy Container to Azure App Service
@@ -67,4 +67,4 @@ jobs:
         with:
           app-name: 'library1'  # Sesuai dengan nama App Service di portal Azure kelompok
           publish-profile: ${{ secrets.AZURE_APP_SERVICE_PUBLISH_PROFILE }}
-          images: 'ghcr.io/${{ env.OWNER_LC }}/teslibrary:latest'
+          images: 'ghcr.io/${{ env.OWNER_LC }}/library1:latest'
