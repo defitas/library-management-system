@@ -3,7 +3,7 @@ name: CI/CD Pipeline to Azure via GitHub Registry (GHCR)
 on:
   push:
     branches:
-      - master  # Memicu otomatisasi setiap kali ada push di branch master kelompok 15
+      - main  # Memicu otomatisasi setiap kali ada push di branch master kelompok 15
 
 jobs:
   # ==========================================
