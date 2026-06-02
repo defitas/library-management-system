@@ -3,7 +3,7 @@ name: CI/CD Pipeline to Azure via GitHub Registry (GHCR)
 on:
   push:
     branches:
-      - main  # Memicu otomatisasi setiap kali ada push di branch master kelompok 15
+      - main  # Memicu otomatisasi setiap kali ada push di branch main
 
 jobs:
   # ==========================================
@@ -40,13 +40,13 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v3
 
-      # Otentikasi ke GitHub Container Registry (GHCR) bawaan akun GitHub kalian
+      # Otentikasi ke GitHub Container Registry (GHCR)
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }} # Otomatis disediakan oleh GitHub, tidak perlu buat secret baru
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Mengubah nama image menjadi huruf kecil agar valid di GHCR
       - name: Downcase Repository Owner
@@ -55,16 +55,35 @@ jobs:
         env:
           OWNER: '${{ github.repository_owner }}'
 
-      # Proses kompilasi & push Docker Image menuju GitHub Packages
+      # Proses kompilasi & push Docker Image menuju GitHub Packages personal (Sudah Benar)
       - name: Build and Push Docker Image to GHCR
         run: |
-          docker build . -t ghcr.io/${{ env.OWNER_LC }}/library1:latest
+          docker build . -t ghcr.io/defitas/library1:latest
           docker push ghcr.io/defitas/library1:latest
 
       # Proses deployment image terkompilasi dari GHCR langsung menuju target Azure App Service
       - name: Deploy Container to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'library1'  # Sesuai dengan nama App Service di portal Azure kelompok
+          app-name: 'library1'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: 'ghcr.io/${{ env.OWNER_LC }}/library1:latest'
+          images: 'ghcr.io/defitas/library1:latest'
+
+      # Otentikasi ke Azure Cloud untuk mengaktifkan perintah Azure CLI 'az'
+      - name: Log in to Azure Cloud for CLI Command
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Proses Injeksi database otomatis via VNet setelah kontainer siap
+      - name: Force Remote MySQL Import via Azure VNet
+        run: |
+          echo "Menunggu 60 detik agar Azure App Service selesai memuat (pull & start) kontainer baru..."
+          sleep 60
+          
+          echo "Memulai proses injeksi skrip lms.sql dari dalam perimeter privat server..."
+          az webapp ssh --name 'library1' \
+            --resource-group 'tes1' \
+            --command 'mysql -h library1-server.mysql.database.azure.com -u ycaifqdzfj -p${{ secrets.DB_PASSWORD }} library1-database < db/lms.sql'
+          
+          echo "Proses impor selesai! Skema database berhasil diperbarui di Cloud."
