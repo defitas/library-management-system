@@ -10,12 +10,14 @@ class DB(object):
 	password = os.environ.get("DB_PASSWORD", "")
 	db = os.environ.get("DB_NAME", "lms")
 	table = ""
+	port = int(os.environ.get("DB_PORT", 18945))
 
 	def __init__(self, app):
 		app.config["MYSQL_DATABASE_HOST"] = self.host;
 		app.config["MYSQL_DATABASE_USER"] = self.user;
 		app.config["MYSQL_DATABASE_PASSWORD"] = self.password;
 		app.config["MYSQL_DATABASE_DB"] = self.db;
+		app.config["MYSQL_DATABASE_PORT"] = self.port;
 
 		self.mysql = MySQL(app, cursorclass=DictCursor)
 
