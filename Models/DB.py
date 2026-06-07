@@ -1,38 +1,48 @@
+import pymysql
 import os
-from flaskext.mysql import MySQL
-from pymysql.cursors import DictCursor
 
+class DB:
+    def __init__(self, app=None):
+        # 1. Ambil URL koneksi gabungan dari Environment Variable Azure
+        # Jika kosong, otomatis pakai fallback string URL publik dari dasbor Railway-mu
+        mysql_url = os.environ.get("MYSQL_URL", "mysql://root:nmLYguKztbZBiXtoeLImLsPmZocqZphb@interchange.proxy.rlwy.net:44559/railway")
+        
+        # 2. Trik cerdas Python untuk memecah string URL menjadi parameter pymysql otomatis
+        # Menghapus teks 'mysql://' di depan
+        clean_url = mysql_url.replace("mysql://", "")
+        
+        # Memisahkan bagian user:password dengan bagian host:port/db
+        credentials, connection_info = clean_url.split("@")
+        user, password = credentials.split(":")
+        
+        host_port, db_name = connection_info.split("/")
+        host, port = host_port.split(":")
 
-class DB(object):
-	"""Initialize mysql database """
-	host = os.environ.get("DB_HOST", "localhost")
-	user = os.environ.get("DB_USER", "root")
-	password = os.environ.get("DB_PASSWORD", "")
-	db = os.environ.get("DB_NAME", "lms")
-	table = ""
-	port = int(os.environ.get("DB_PORT", 18945))
+        # 3. Masukkan hasil pecahan ke dalam konfigurasi koneksi murni
+        self.host = host
+        self.port = int(port)
+        self.user = user
+        self.password = password
+        self.db_name = db_name
+        self.connection = None
 
-	def __init__(self, app):
-		app.config["MYSQL_DATABASE_HOST"] = self.host;
-		app.config["MYSQL_DATABASE_USER"] = self.user;
-		app.config["MYSQL_DATABASE_PASSWORD"] = self.password;
-		app.config["MYSQL_DATABASE_DB"] = self.db;
-		app.config["MYSQL_DATABASE_PORT"] = self.port;
+    def connect(self):
+        if self.connection is None or not self.connection.open:
+            self.connection = pymysql.connect(
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=self.password,
+                db=self.db_name,
+                charset="utf8mb4",
+                cursorclass=pymysql.cursors.DictCursor
+            )
+        return self.connection
 
-		self.mysql = MySQL(app, cursorclass=DictCursor)
-
-	def cur(self):
-		return self.mysql.get_db().cursor()
-
-	def query(self, q):
-		h = self.cur()
-	
-		if (len(self.table)>0):
-			q = q.replace("@table", self.table)
-
-		h.execute(q)
-
-		return h
-
-	def commit(self):
-		self.query("COMMIT;")
+    def cur(self):
+        return self.connect().cursor()
+        
+    def query(self, q):
+        cursor = self.cur()
+        cursor.execute(q)
+        return cursor
