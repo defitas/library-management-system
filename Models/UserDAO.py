@@ -36,7 +36,6 @@ class UserDAO():
 		password = user['password']
 
 		q = self.db.query("INSERT INTO users (name, email, password) VALUES('{}', '{}', '{}');".format(name, email, password))
-		self.db.commit()
 		
 		return q
 
@@ -48,6 +47,5 @@ class UserDAO():
 		bio = user['bio']
 
 		q = self.db.query("UPDATE users SET name = '{}', email='{}', password='{}', bio='{}' WHERE id={}".format(name, email, password, bio, _id))
-		self.db.commit()
 		
 		return q

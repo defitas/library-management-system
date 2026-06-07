@@ -5,7 +5,6 @@ class BookDAO():
 
 	def delete(self, id):
 		q = self.db.query("DELETE FROM books where id={}".format(id))
-		self.db.commit()
 
 		return q
 
@@ -17,7 +16,6 @@ class BookDAO():
 		q = self.db.query("INSERT INTO reserve (user_id, book_id) VALUES('{}', '{}');".format(user_id, book_id))
 		
 		self.db.query("UPDATE books set count=count-1 where id={};".format(book_id))
-		self.db.commit()
 
 		return q
 
