@@ -7,7 +7,7 @@ app.secret_key = '#$ab9&^BB00_.'
 # Setting DAO Class
 from Models.DAO import DAO
 
-DAO = DAO(app)
+dao = DAO(app)
 
 # Registering blueprints
 from routes.user import user_view
