@@ -1,48 +1,29 @@
-import pymysql
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import os
 
 class DB:
     def __init__(self, app=None):
-        # 1. Ambil URL koneksi gabungan dari Environment Variable Azure
-        # Jika kosong, otomatis pakai fallback string URL publik dari dasbor Railway-mu
-        mysql_url = os.environ.get("MYSQL_URL", "mysql://root:nmLYguKztbZBiXtoeLImLsPmZocqZphb@interchange.proxy.rlwy.net:44559/railway")
-        
-        # 2. Trik cerdas Python untuk memecah string URL menjadi parameter pymysql otomatis
-        # Menghapus teks 'mysql://' di depan
-        clean_url = mysql_url.replace("mysql://", "")
-        
-        # Memisahkan bagian user:password dengan bagian host:port/db
-        credentials, connection_info = clean_url.split("@")
-        user, password = credentials.split(":")
-        
-        host_port, db_name = connection_info.split("/")
-        host, port = host_port.split(":")
-
-        # 3. Masukkan hasil pecahan ke dalam konfigurasi koneksi murni
-        self.host = host
-        self.port = int(port)
-        self.user = user
-        self.password = password
-        self.db_name = db_name
+        # Membaca URL koneksi URI langsung dari Environment Variable Azure
+        # Jika kosong, otomatis pakai fallback string URI dari Supabase-mu
+        self.db_url = os.environ.get("DATABASE_URL", "postgresql://postgres:psokelompok#15@db.xrhqenkwpgiyzffdwdtj.supabase.co:5432/postgres")
         self.connection = None
 
     def connect(self):
-        if self.connection is None or not self.connection.open:
-            self.connection = pymysql.connect(
-                host=self.host,
-                port=self.port,
-                user=self.user,
-                password=self.password,
-                db=self.db_name,
-                charset="utf8mb4",
-                cursorclass=pymysql.cursors.DictCursor
-            )
+        if self.connection is None or self.connection.closed != 0:
+            self.connection = psycopg2.connect(self.db_url)
         return self.connection
 
     def cur(self):
-        return self.connect().cursor()
+        # RealDictCursor memaksa output PostgreSQL berbentuk Dictionary (seperti DictCursor di PyMySQL)
+        # Langkah ini krusial agar kode Controller & View kelompokmu tidak pecah/eror
+        return self.connect().cursor(cursor_factory=RealDictCursor)
         
     def query(self, q):
+        # Menyesuaikan sedikit syntax placeholder MySQL jika ada (misal mengubah @table menjadi nama tabel asli)
         cursor = self.cur()
         cursor.execute(q)
+        # Otomatis melakukan commit jika ada query INSERT/UPDATE/DELETE
+        if any(keyword in q.upper() for keyword in ["INSERT", "UPDATE", "DELETE", "ALTER", "DROP"]):
+            self.connect().commit()
         return cursor

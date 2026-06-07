@@ -1,6 +1,5 @@
 flask==2.3.2
-flask-mysql==1.5.2
+psycopg2-binary==2.9.9
 timeago==1.0.15
 gunicorn==20.1.0
-pymysql==1.0.2
 cryptography==41.0.3
