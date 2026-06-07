@@ -62,16 +62,14 @@ class BookDAO():
 		return book
 
 	def list(self, availability=1):
-		query="select * from books"
-		# Usually when no-admin user query for book
-		if availability==1: query= query+"  WHERE availability={}".format(availability)
+		query = "SELECT * FROM books"
+		if availability == 1:
+			query += " WHERE availability = %s"
+			books = self.db.query(query, (availability,))
+		else:
+			books = self.db.query(query)
 		
-		books = self.db.query(query)
-		
-		books = books.fetchall()
-
-
-		return books
+		return books.fetchall()
 
 	def getReserverdBooksByUser(self, user_id):
 		query="select concat(book_id,',') as user_books from reserve WHERE user_id={}".format(user_id)

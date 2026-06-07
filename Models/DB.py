@@ -19,16 +19,12 @@ class DB:
         # RealDictCursor memaksa output PostgreSQL berbentuk Dictionary
         return self.connect().cursor(cursor_factory=RealDictCursor)
         
-    def query(self, q):
+    def query(self, q, params=None):
         cursor = self.cur()
         try:
-            # Eksekusi query SQL
-            cursor.execute(q)
-            
-            # Otomatis melakukan commit jika ada transaksi data (Penting untuk PostgreSQL)
+            cursor.execute(q, params)  # params handles safe substitution
             if any(keyword in q.upper() for keyword in ["INSERT", "UPDATE", "DELETE", "ALTER", "DROP"]):
-                self.connect().commit()
-                
+                  self.connect().commit()
             return cursor
         except Exception as e:
             # Jika gagal, batalkan transaksi agar database tidak terkunci (Lock)
