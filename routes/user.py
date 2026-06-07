@@ -1,7 +1,6 @@
 from flask import Blueprint, g, escape, session, redirect, render_template, request, jsonify, Response, flash
-from app import DAO
+from app import dao as DAO
 from Misc.functions import *
-
 from Controllers.UserManager import UserManager
 
 user_view = Blueprint('user_routes', __name__, template_folder='/templates')

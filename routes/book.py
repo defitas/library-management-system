@@ -1,6 +1,5 @@
 from flask import Blueprint, g, escape, session, redirect, render_template, request, jsonify, Response
-from app import DAO
-
+from app import dao as DAO
 from Controllers.UserManager import UserManager
 from Controllers.BookManager import BookManager
 
