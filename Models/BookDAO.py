@@ -4,7 +4,7 @@ class BookDAO():
 		self.db.table = "books"
 
 	def delete(self, id):
-		q = self.db.query("DELETE FROM @table where id={}".format(id))
+		q = self.db.query("DELETE FROM books where id={}".format(id))
 		self.db.commit()
 
 		return q
@@ -16,13 +16,13 @@ class BookDAO():
 
 		q = self.db.query("INSERT INTO reserve (user_id, book_id) VALUES('{}', '{}');".format(user_id, book_id))
 		
-		self.db.query("UPDATE @table set count=count-1 where id={};".format(book_id))
+		self.db.query("UPDATE books set count=count-1 where id={};".format(book_id))
 		self.db.commit()
 
 		return q
 
 	def getBooksByUser(self, user_id):
-		q = self.db.query("select * from @table left join reserve on reserve.book_id = @table.id where reserve.user_id={}".format(user_id))
+		q = self.db.query("select * from books left join reserve on reserve.book_id = books.id where reserve.user_id={}".format(user_id))
 
 		books = q.fetchall()
 
@@ -30,7 +30,7 @@ class BookDAO():
 		return books
 
 	def getBooksCountByUser(self, user_id):
-		q = self.db.query("select count(reserve.book_id) as books_count from @table left join reserve on reserve.book_id = @table.id where reserve.user_id={}".format(user_id))
+		q = self.db.query("select count(reserve.book_id) as books_count from books left join reserve on reserve.book_id = books.id where reserve.user_id={}".format(user_id))
 
 		books = q.fetchall()
 
@@ -38,7 +38,7 @@ class BookDAO():
 		return books
 
 	def getBook(self, id):
-		q = self.db.query("select * from @table where id={}".format(id))
+		q = self.db.query("select * from books where id={}".format(id))
 
 		book = q.fetchone()
 
@@ -55,14 +55,14 @@ class BookDAO():
 		return True
 
 	def getById(self, id):
-		q = self.db.query("select * from @table where id='{}'".format(id))
+		q = self.db.query("select * from books where id='{}'".format(id))
 
 		book = q.fetchone()
 
 		return book
 
 	def list(self, availability=1):
-		query="select * from @table"
+		query="select * from books"
 		# Usually when no-admin user query for book
 		if availability==1: query= query+"  WHERE availability={}".format(availability)
 		
@@ -84,7 +84,7 @@ class BookDAO():
 		return books
 
 	def search_book(self, name, availability=1):
-		query="select * from @table where name LIKE '%{}%'".format(name)
+		query="select * from books where name LIKE '%{}%'".format(name)
 
 		# Usually when no-admin user query for book
 		if availability==1: query= query+"  AND availability={}".format(availability)
